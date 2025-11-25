@@ -1,0 +1,70 @@
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+*.pkl
+*.db
+
+# Virtual environment
+venv/
+.env/
+.env.bak
+.venv/
+pip-wheel-metadata/
+*.egg-info/
+
+# ---- Project data ----
+# Local datasets, vector stores, document caches
+storage/
+data/
+dataset/
+index/
+indexes/
+vectorstore/
+vectordb/
+chroma/
+lancedb/
+cache/
+
+# LlamaIndex / LangChain artifacts
+*.jsonl
+*.json.tmp
+*.json.cache
+*.llama.index
+*.lc
+*.lci
+
+# PDF or raw ingestion files (optional – poista, jos haluat versionhallintaan)
+ingest/
+documents/
+raw_docs/
+pdf/
+*.pdf
+
+# ---- Logs ----
+logs/
+*.log
+
+# ---- FastAPI / Uvicorn ----
+*.sqlite3
+*.db-journal
+
+# ---- Jupyter ----
+.ipynb_checkpoints/
+*.ipynb_checkpoint
+
+# ---- Node / OpenWebUI integration (jos käytät extensioneja) ----
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+dist/
+
+# ---- OS / Editor ----
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
