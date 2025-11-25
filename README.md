@@ -43,7 +43,7 @@ Core local LLM runtime and model orchestrator. Provides an HTTP API and CLI for 
 **OpenWebUI**  
 A modern web UI for interacting with Ollama models. Supports RAG plugins, chat history, file uploads, and extensions.
 
-### ⚙️ Python Libraries
+### Python Libraries
 
 #### 1. RAG & LLM Frameworks
 - **LlamaIndex** – High-level framework for building RAG pipelines, document loaders, query engines, and agents.  
