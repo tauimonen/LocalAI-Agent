@@ -12,7 +12,37 @@ The goal is to enable privacy-preserving, offline-capable AI workflows that supp
 - Custom backends and tools
 - Extendable UI (OpenWebUI)
 
-Everything runs locally on Linux/Ubuntu or WSL.
+## Why Everything Runs Locally on Linux/Ubuntu or WSL
+
+This project is designed to run entirely locally on Linux, Ubuntu, or WSL for several important reasons:
+
+1. **Stable Development Environment**  
+   - Linux is the de facto standard for Python and AI/ML development in 2025.  
+   - Libraries like PyTorch, TensorFlow, Hugging Face, ChromaDB, and LanceDB are fully supported.  
+   - WSL allows Windows users to work in a consistent Linux-like environment.
+
+2. **Faster Iteration**  
+   - Local execution avoids network latency and external API calls.  
+   - Embeddings, vector stores, and agent logic can be tested instantly.  
+
+3. **Data Security & Privacy**  
+   - All documents and embeddings remain local.  
+   - Critical for sensitive data handling and GDPR compliance.  
+
+4. **Dependency Management & GPU Support**  
+   - Linux/Ubuntu fully supports native dependencies and GPU acceleration.  
+   - WSL enables the same workflow on Windows with minimal differences.
+
+5. **Compatibility with Containers & Cloud**  
+   - Local Linux development ensures smooth transition to Docker or Kubernetes.  
+   - Reduces issues with file paths, permissions, and case sensitivity.
+
+6. **Flexible Testing & Development**  
+   - Easy to test multiple Python versions, virtual environments, and GPU setups.  
+   - Components like VectorStore, RAG pipeline, and FastAPI server can run independently yet locally.
+
+**Summary:**  
+Running the project locally on Linux or WSL ensures fast, secure, reproducible, and scalable development, which is critical for RAG-based AI agents and local LLM workflows.
 
 ## Features
 
@@ -43,7 +73,7 @@ Core local LLM runtime and model orchestrator. Provides an HTTP API and CLI for 
 **OpenWebUI**  
 A modern web UI for interacting with Ollama models. Supports RAG plugins, chat history, file uploads, and extensions.
 
-### ⚙️ Python Libraries
+### Python Libraries
 
 #### 1. RAG & LLM Frameworks
 - **LlamaIndex** – High-level framework for building RAG pipelines, document loaders, query engines, and agents.  
