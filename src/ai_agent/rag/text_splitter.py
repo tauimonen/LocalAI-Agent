@@ -121,10 +121,8 @@ class RecursiveCharacterTextSplitter(TextSplitter):
 
     def split(self, text: str) -> List[str]:
         """Split text recursively using separators.
-
         Args:
             text: Text to split
-
         Returns:
             List of text chunks
         """
