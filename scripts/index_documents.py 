@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+"""Document indexing script.
+
+Loads documents from a directory and indexes them in the vector store.
+
+Usage:
+    python scripts/index_documents.py --directory data/documents --chunk-size 512
+"""
+
+import argparse
+import asyncio
+from pathlib import Path
+
+from loguru import logger
+from rich.console import Console
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+from ai_agent.config import Settings
+from ai_agent.core.vector_store import ChromaVectorStore, LanceVectorStore
+from ai_agent.rag.document_loader import DocumentLoader
+
+
+console = Console()
+
+
+def split_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]:
+    """Simple text splitter.
+    
+    Args:
+        text: Text to split
+        chunk_size: Size of each chunk
+        chunk_overlap: Overlap between chunks
+        
+    Returns:
+        List of text chunks
+    """
+    chunks = []
+    start = 0
+    text_length = len(text)
+    
+    while start < text_length:
+        end = start + chunk_size
+        chunk = text[start:end]
+        
+        # Try to break at sentence boundary
+        if end < text_length:
+            last_period = chunk.rfind(". ")
+            if last_period > chunk_size // 2:
+                end = start + last_period + 1
+                chunk = text[start:end]
+        
+        chunks.append(chunk.strip())
+        start = end - chunk_overlap
+    
+    return chunks
+
+
+async def index_documents(
+    directory: Path,
+    chunk_size: int,
+    chunk_overlap: int,
+    vector_db_type: str,
+) -> None:
+    """Index documents from a directory.
+    
+    Args:
+        directory: Directory containing documents
+        chunk_size: Size of text chunks
+        chunk_overlap: Overlap between chunks
+        vector_db_type: Type of vector database ('chroma' or 'lance')
+    """
+    # Initialize components
+    settings = Settings(
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap,
+        vector_db_type=vector_db_type,
+    )
+    
+    logger.info(f"Initializing {vector_db_type} vector store")
+    if vector_db_type == "chroma":
+        vector_store = ChromaVectorStore(settings)
+    else:
+        vector_store = LanceVectorStore(settings)
+    
+    document_loader = DocumentLoader()
+    
+    # Load documents
+    console.print(f"\n[bold blue]Loading documents from:[/bold blue] {directory}")
+    
+    try:
+        documents = document_loader.load_directory(directory)
+    except Exception as e:
+        console.print(f"[bold red]Error loading documents:[/bold red] {e}")
+        return
+    
+    if not documents:
+        console.print("[bold yellow]No documents found in directory[/bold yellow]")
+        return
+    
+    console.print(f"[bold green]Loaded {len(documents)} documents[/bold green]")
+    
+    # Process and index documents
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        
+        task = progress.add_task("Processing documents...", total=len(documents))
+        
+        all_chunks = []
+        for doc in documents:
+            # Split document into chunks
+            chunks = split_text(doc.content, chunk_size, chunk_overlap)
+            
+            # Create chunk documents
+            for i, chunk in enumerate(chunks):
+                if chunk.strip():  # Skip empty chunks
+                    chunk_id = f"{doc.metadata['filename']}_{i}"
+                    all_chunks.append({
+                        "id": chunk_id,
+                        "content": chunk,
+                        "metadata": {
+                            **doc.metadata,
+                            "chunk_id": i,
+                            "total_chunks": len(chunks),
+                        },
+                    })
+            
+            progress.advance(task)
+        
+        console.print(f"\n[bold cyan]Created {len(all_chunks)} chunks[/bold cyan]")
+        
+        # Add to vector store
+        task2 = progress.add_task("Indexing chunks...", total=len(all_chunks))
+        
+        try:
+            await vector_store.add_documents(all_chunks)
+            progress.advance(task2, advance=len(all_chunks))
+            console.print(f"\n[bold green]✓ Successfully indexed {len(all_chunks)} chunks[/bold green]")
+        except Exception as e:
+            console.print(f"\n[bold red]✗ Error indexing documents:[/bold red] {e}")
+            logger.exception("Indexing failed")
+
+
+def main() -> None:
+    """Main entry point."""
+    parser = argparse.ArgumentParser(
+        description="Index documents into vector store",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    
+    parser.add_argument(
+        "--directory",
+        type=Path,
+        default=Path("data/documents"),
+        help="Directory containing documents to index",
+    )
+    
+    parser.add_argument(
+        "--chunk-size",
+        type=int,
+        default=512,
+        help="Size of text chunks (default: 512)",
+    )
+    
+    parser.add_argument(
+        "--chunk-overlap",
+        type=int,
+        default=50,
+        help="Overlap between chunks (default: 50)",
+    )
+    
+    parser.add_argument(
+        "--vector-db",
+        type=str,
+        choices=["chroma", "lance"],
+        default="chroma",
+        help="Vector database type (default: chroma)",
+    )
+    
+    args = parser.parse_args()
+    
+    # Validate directory
+    if not args.directory.exists():
+        console.print(f"[bold red]Error:[/bold red] Directory not found: {args.directory}")
+        return
+    
+    # Run indexing
+    console.print("\n[bold]Document Indexing Script[/bold]")
+    console.print("=" * 50)
+    
+    try:
+        asyncio.run(index_documents(
+            directory=args.directory,
+            chunk_size=args.chunk_size,
+            chunk_overlap=args.chunk_overlap,
+            vector_db_type=args.vector_db,
+        ))
+    except KeyboardInterrupt:
+        console.print("\n[bold yellow]Indexing interrupted by user[/bold yellow]")
+    except Exception as e:
+        console.print(f"\n[bold red]Unexpected error:[/bold red] {e}")
+        logger.exception("Indexing failed")
+
+
+if __name__ == "__main__":
+    main()

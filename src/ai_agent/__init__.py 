@@ -1,0 +1,3 @@
+"""Local AI Agent with RAG capabilities."""
+
+__version__ = "0.1.0"
