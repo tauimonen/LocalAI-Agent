@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Document indexing script.
 
 Loads documents from a directory and indexes them in the vector store.
